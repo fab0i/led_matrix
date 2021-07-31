@@ -3,7 +3,7 @@ import time
 import sys
 
 matrix = RgbMatrix()
-matrix.render_img('./img/icon/et.gif')
+matrix.run_gif('./img/icon/et.gif')
 try:
     print("Press CTRL-C to stop.")
     while True:
