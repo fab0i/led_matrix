@@ -31,6 +31,6 @@ class RunText(SampleBase):
 
 # Main function
 if __name__ == "__main__":
-    run_text = RunText()
+    run_text = RunText("fab0i   lol   ")
     if (not run_text.process()):
         run_text.print_help()
