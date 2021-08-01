@@ -95,7 +95,7 @@ class RgbMatrix():
         return frames
 
 
-    def run_gif(self, img_file):
+    def render_gif(self, img_file):
        frames = self.processImage(img_file)
        while True:
            for f in frames:
