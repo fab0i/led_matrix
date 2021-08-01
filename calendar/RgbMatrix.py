@@ -95,7 +95,7 @@ class RgbMatrix():
 
         return frames
 
-
+    # @TODO: Transparent GIFs are broken
     def render_gif(self, img_file):
        frames = self.processImage(img_file)
        while True:
