@@ -18,5 +18,5 @@ matrix = RgbMatrix(32, 32)
 #matrix.render_gif('./img/icon/gun_lady.gif')
 #matrix.render_gif('./img/icon/ghost.gif')
 
-matrix.render_gif('./img/icon/monkey2.gif')
+matrix.render_gif('./img/icon/original_big.gif')
 
