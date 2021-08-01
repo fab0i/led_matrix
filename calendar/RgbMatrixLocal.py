@@ -24,8 +24,7 @@ class RgbMatrix():
     def render_img(self, img_file, duration):
         try:
             pilImage = Image.open(img_file)
-            self.display_img(self.pixelate(pilImage))
-            time.sleep(duration)
+            self.display_img(self.pixelate(pilImage), duration)
         except IOError:
             print("Unable to load image")
 
@@ -42,10 +41,11 @@ class RgbMatrix():
         pilImage.paste(self.overlay, (0,0), self.overlay)
         return pilImage
 
-    def display_img(self, pilImage):
+    def display_img(self, pilImage, duration):
         image = ImageTk.PhotoImage(pilImage)
         imagesprite = self.canvas.create_image(self.mid[0], self.mid[1], image=image)
         self.root.update()
+        time.sleep(duration)
 
     @staticmethod
     def analyseImage(path):
@@ -120,11 +120,10 @@ class RgbMatrix():
 
     def render_gif(self, img_file, duration=0):
         frames = self.processImage(img_file)
-        processed_frames = map(self.pixelate, frames)
+        processed_frames = [self.pixelate(f) for f in frames]
 
         while True:
             for f in processed_frames:
-                self.display_img(f)
-                time.sleep(0.1)
+                self.display_img(f, 0.1)
 
 

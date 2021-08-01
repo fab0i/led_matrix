@@ -22,10 +22,9 @@ class RgbMatrix():
     def render_img(self, img_file, duration):
         try:
             image = self.pixelate(Image.open(img_file))
-            image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+            # image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+            self.display_img(image, duration)
 
-            self.matrix.SetImage(image.convert('RGB'))
-            time.sleep(duration)
         except IOError:
             print("Unable to load image")
 
@@ -38,6 +37,9 @@ class RgbMatrix():
         pilImage = pilImage.resize(self.size)
         return pilImage
 
+    def display_img(self, img, duration):
+        self.matrix.SetImage(img.convert('RGB'))
+        time.sleep(duration)
 
     @staticmethod
     def analyseImage(path):
@@ -113,9 +115,8 @@ class RgbMatrix():
 
     # @TODO: Transparent GIFs are broken
     def render_gif(self, img_file):
-       frames = self.processImage(img_file)
-       frames = map(self.pixelate, frames)
-       while True:
-           for f in frames:
-               self.matrix.SetImage(f.convert('RGB'))
-               time.sleep(0.1)
+        frames = self.processImage(img_file)
+        frames = [self.pixelate(f) for f in frames]
+        while True:
+            for f in frames:
+                self.display_img(f, 0.1)
