@@ -1,7 +1,7 @@
 #!/bin/sh
 
-git fetch;
-git pull;
-git add *;
-git commit -m "Internal push by script";
-git push;
+sudo git fetch;
+sudo git pull;
+sudo git add *;
+sudo git commit -m "Internal push by script";
+sudo git push;
