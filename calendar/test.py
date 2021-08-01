@@ -14,6 +14,6 @@ from tkinter import Tk
 
 matrix = RgbMatrix(32, 32)
 #matrix.render_gif('./img/icon/et.gif')
-#matrix.render_img('./img/icon/dog.png', 10)
-matrix.render_gif('./img/icon/gun_lady.gif')
-#matrix.render_gif('./img/icon/ghost.gif')
+#matrix.render_img('./img/icon/groceries2.png', 15)
+#matrix.render_gif('./img/icon/gun_lady.gif')
+matrix.render_gif('./img/icon/ghost.gif')

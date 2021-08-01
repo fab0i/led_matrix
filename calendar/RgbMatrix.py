@@ -16,11 +16,12 @@ class RgbMatrix():
 
         self.matrix = RGBMatrix(options=options)
 
-    def render_img(self, img_file):
+    def render_img(self, img_file, duration):
         image = Image.open(img_file)
         image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
         
         self.matrix.SetImage(image.convert('RGB'))
+        time.sleep(duration)
 
     @staticmethod
     def analyseImage(path):
