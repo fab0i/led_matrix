@@ -21,7 +21,6 @@ class RgbMatrix():
 
         self.overlay = Image.open('./img/overlay_1152x1152.png').resize(self.canvas_size)
 
-    # @TODO: Add time to display shit for
     def render_img(self, img_file, duration):
         try:
             pilImage = Image.open(img_file)

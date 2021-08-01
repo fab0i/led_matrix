@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import time
 import sys
 
@@ -6,22 +7,37 @@ from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from PIL import Image
 
 class RgbMatrix():
-    def __init__(self, rows=32, chain_length=1, parallel=1):
+    def __init__(self, rows=32, cols=32):
         options = RGBMatrixOptions()
         options.rows = rows
-        options.cols = rows
+        options.cols = cols
         options.chain_length = 1
         options.parallel = 1
         options.hardware_mapping = 'adafruit-hat'
 
+        self.size = (rows, cols)
+
         self.matrix = RGBMatrix(options=options)
 
     def render_img(self, img_file, duration):
-        image = Image.open(img_file)
-        image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
-        
-        self.matrix.SetImage(image.convert('RGB'))
-        time.sleep(duration)
+        try:
+            image = self.pixelate(Image.open(img_file))
+            image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+
+            self.matrix.SetImage(image.convert('RGB'))
+            time.sleep(duration)
+        except IOError:
+            print("Unable to load image")
+
+    def pixelate(self, pilImage):
+        """
+        :param img: img file path
+        :return: Pixelated image, resized to fit the canvas
+        """
+        # Resize Pillow image to have dimension of LED Matrix
+        pilImage = pilImage.resize(self.size)
+        return pilImage
+
 
     @staticmethod
     def analyseImage(path):
@@ -98,6 +114,7 @@ class RgbMatrix():
     # @TODO: Transparent GIFs are broken
     def render_gif(self, img_file):
        frames = self.processImage(img_file)
+       frames = map(self.pixelate, frames)
        while True:
            for f in frames:
                self.matrix.SetImage(f.convert('RGB'))
