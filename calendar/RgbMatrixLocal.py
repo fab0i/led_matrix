@@ -2,31 +2,57 @@
 import time
 import sys
 
-from rgbmatrix import RGBMatrix, RGBMatrixOptions
-from PIL import Image
+from PIL import Image, ImageTk, ExifTags
+from tkinter import Tk, Canvas
+from tkinter.ttk import Label
+
 
 class RgbMatrix():
-    def __init__(self, rows=32, chain_length=1, parallel=1):
-        options = RGBMatrixOptions()
-        options.rows = rows
-        options.cols = rows
-        options.chain_length = 1
-        options.parallel = 1
-        options.hardware_mapping = 'adafruit-hat'
+    def __init__(self, rows=16, cols=16, canvas=(900, 900)):
+        self.width = rows
+        self.height = cols
+        self.canvas_size = canvas
 
-        self.matrix = RGBMatrix(options=options)
+        self.root = Tk()
+        self.root.geometry("{}x{}".format(self.canvas_size[0], self.canvas_size[1]))
+        self.canvas = Canvas(self.root, width=self.canvas_size[0] - 1, height=self.canvas_size[1] - 1)
+        self.canvas.pack()
 
-    def render_img(self, img_file):
-        image = Image.open(img_file)
-        image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
-        
-        self.matrix.SetImage(image.convert('RGB'))
+        self.overlay = Image.open('./img/overlay_1152x1152.png').resize(self.canvas_size)
+
+    # @TODO: Add time to display shit for
+    def render_img(self, img_file, duration):
+        try:
+            pilImage = Image.open(img_file)
+            self.display_img(pilImage)
+            time.sleep(duration)
+        except IOError:
+            print("Unable to load image")
+
+
+    def get_pixelated_img(self, pilImage):
+        """
+        :param img: img file path
+        :return: Pixelated image, resized to fit the canvas
+        """
+        # Resize Pillow image to have dimension of LED Matrix
+        pilImage = pilImage.resize((self.width, self.height))
+        # Resize again to fit canvas
+        pilImage = pilImage.resize(self.canvas_size)
+        return pilImage
+
+    def display_img(self, pilImage):
+        pilImage = self.get_pixelated_img(pilImage)
+        pilImage.paste(self.overlay, (0,0), self.overlay)
+        image = ImageTk.PhotoImage(pilImage)
+        imagesprite = self.canvas.create_image(450, 450, image=image)
+        self.root.update()
 
     @staticmethod
     def analyseImage(path):
         """
         Pre-process pass over the image to determine the mode (full or additive).
-        Necessary as assessing single frames isn't reliable. Need to know the mode 
+        Necessary as assessing single frames isn't reliable. Need to know the mode
         before processing all frames.
         """
 
@@ -55,7 +81,7 @@ class RgbMatrix():
         Iterate the GIF, extracting each frame.
         """
         mode = self.analyseImage(path)['mode']
-                        
+
         im = Image.open(path)
 
         frames = []
@@ -63,7 +89,6 @@ class RgbMatrix():
         i = 0
         p = im.getpalette()
         last_frame = im.convert('RGBA')
-
 
         try:
             while True:
@@ -73,9 +98,9 @@ class RgbMatrix():
                 '''
                 if not im.getpalette():
                     im.putpalette(p)
-            
+
                 new_frame = Image.new('RGBA', im.size)
-            
+
                 '''
                 Is this file a "partial"-mode GIF where frames update a region of a different size to the entire image?
                 If so, we need to construct the new frame by pasting it on top of the preceding frames.
@@ -83,7 +108,7 @@ class RgbMatrix():
                 if mode == 'partial':
                     new_frame.paste(last_frame)
 
-                new_frame.paste(im, (0,0), im.convert('RGBA'))
+                new_frame.paste(im, (0, 0), im.convert('RGBA'))
                 frames.append(new_frame)
 
                 i += 1
@@ -94,10 +119,12 @@ class RgbMatrix():
 
         return frames
 
+    def render_gif(self, img_file):
+        frames = self.processImage(img_file)
+        while True:
+            for f in frames:
+                pilImage = self.get_pixelated_img(f)
+                self.display_img(pilImage)
+                time.sleep(0.1)
 
-    def run_gif(self, img_file):
-       frames = self.processImage(img_file)
-       while True:
-           for f in frames:
-               self.matrix.SetImage(f.convert('RGB'))
-               time.sleep(0.1)
+
