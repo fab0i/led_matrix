@@ -12,6 +12,7 @@ class RgbMatrix():
         self.width = rows
         self.height = cols
         self.canvas_size = canvas
+        self.mid = (int(canvas[0]/2), int(canvas[1]/2))
 
         self.root = Tk()
         self.root.geometry("{}x{}".format(self.canvas_size[0], self.canvas_size[1]))
@@ -24,13 +25,13 @@ class RgbMatrix():
     def render_img(self, img_file, duration):
         try:
             pilImage = Image.open(img_file)
-            self.display_img(pilImage)
+            self.display_img(self.pixelate(pilImage))
             time.sleep(duration)
         except IOError:
             print("Unable to load image")
 
 
-    def get_pixelated_img(self, pilImage):
+    def pixelate(self, pilImage):
         """
         :param img: img file path
         :return: Pixelated image, resized to fit the canvas
@@ -39,13 +40,12 @@ class RgbMatrix():
         pilImage = pilImage.resize((self.width, self.height))
         # Resize again to fit canvas
         pilImage = pilImage.resize(self.canvas_size)
+        pilImage.paste(self.overlay, (0,0), self.overlay)
         return pilImage
 
     def display_img(self, pilImage):
-        pilImage = self.get_pixelated_img(pilImage)
-        pilImage.paste(self.overlay, (0,0), self.overlay)
         image = ImageTk.PhotoImage(pilImage)
-        imagesprite = self.canvas.create_image(450, 450, image=image)
+        imagesprite = self.canvas.create_image(self.mid[0], self.mid[1], image=image)
         self.root.update()
 
     @staticmethod
@@ -119,12 +119,13 @@ class RgbMatrix():
 
         return frames
 
-    def render_gif(self, img_file):
+    def render_gif(self, img_file, duration=0):
         frames = self.processImage(img_file)
+        processed_frames = map(self.pixelate, frames)
+
         while True:
-            for f in frames:
-                pilImage = self.get_pixelated_img(f)
-                self.display_img(pilImage)
+            for f in processed_frames:
+                self.display_img(f)
                 time.sleep(0.1)
 
 
