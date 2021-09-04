@@ -1,2 +1,5 @@
 calendar/__pycache__/
 .idea/
+*.pyc
+
+.env
