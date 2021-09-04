@@ -1,2 +1,2 @@
-# led_matrix
+# pixeLED
 Projects for my Raspberry Pi LED Matrix
