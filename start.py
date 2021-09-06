@@ -5,8 +5,8 @@ import requests
 print("Starting...")
 
 faboi_url = 'https://faboinet.herokuapp.com'
-#os.system("../ngrok http 80")
 
+#os.system("./ngrok http 80")
 os.system("curl http://localhost:4040/api/tunnels > tunnels.json")
 
 print("Creating temporary tunnels.json...")
@@ -26,7 +26,7 @@ print("\nRemoved tunnels.json.")
 
 url = public_urls[-1]
 
-post_data = {'action': "create", 'url': url}
+post_data = {'action': "seed", 'url': url}
 headers = {'Referer': url}
 pi_connect = faboi_url + '/apps/pixeled/pi_connect'
 response = requests.post(pi_connect, json=post_data, headers=headers)
