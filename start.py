@@ -34,6 +34,12 @@ data = json.loads(response.content)
 print("RESPONSE DATA:", data)
 # @TODO First confirm it's code 200...
 if data['success']:
+    if 'code' not in data:
+        print("INVALID RESPONSE DATA")
+        print(data)
+        print("EXITING....")
+        exit(0)
+
     code = data['code']
     with open("pixeled_connection", "w") as f:
         n = f.write(code)
