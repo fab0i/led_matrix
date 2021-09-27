@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_restful import Api, Resource
 
 from RgbMatrix import RgbMatrix
@@ -14,10 +14,15 @@ class ImageDisplay(Resource):
         return "What?"
 
     def post(self, action, image):
-        matrix.render_gif(image, 0)
+        json_data = request.get_json(force=True)
+        action = json_data['action']
+        image = json_data['img']
+
+        if action == 'render_gif':
+            matrix.render_gif(image)
 
 
-api.add_resource(ImageDisplay, '/<string:action>/<string:image>')
+api.add_resource(ImageDisplay, '/')
 
 if __name__ == '__main__':
     app.run(debug=True)
