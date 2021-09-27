@@ -16,6 +16,8 @@ with open('tunnels.json') as f:
 public_urls = []
 for i in tunnels['tunnels']:
     public_urls.append(i['public_url'])
+    if 'https' in i['public_url']:
+        break
 
 print("Public URLs:")
 print(public_urls)
