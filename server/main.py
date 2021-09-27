@@ -15,3 +15,9 @@ class ImageDisplay(Resource):
 
     def post(self, action, image):
         matrix.render_gif(image, 0)
+
+
+api.add_resource(ImageDisplay, '/<string:action>/<string:image>')
+
+if __name__ == '__main__':
+    app.run(debug=True)
