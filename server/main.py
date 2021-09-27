@@ -1,11 +1,9 @@
 from flask import Flask
 from flask_restful import Api, Resource
 
-from RgbMatrixLocal import RgbMatrix
+from RgbMatrix import RgbMatrix
 import time
 import sys
-import matplotlib
-matplotlib.use('Agg')
 
 app = Flask(__name__)
 api = Api(app)
