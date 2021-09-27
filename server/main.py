@@ -1,27 +1,30 @@
 from flask import Flask, request, jsonify
-from flask_ngrok import run_with_ngrok
+from flask_restful import Api, Resource
 
 from RgbMatrix import RgbMatrix
 import time
 import sys
 
 app = Flask(__name__)
-run_with_ngrok(app)
-
+api = Api(app)
 matrix = RgbMatrix(32, 32)
 
-@app.route('/', methods=['GET', 'POST'])
-def add_message():
-    json_data = request.json
-    print(request)
-    print(json_data)
-    action = json_data['action']
-    image = json_data['img']
+class ImageDisplay(Resource):
+    def get(self):
+        return "What?"
 
-    if action == 'render_gif':
-        matrix.render_gif(image, 10)
+    def post(self):
+        json_data = request.get_json(force=True)
+        action = json_data['action']
+        image = json_data['img']
 
-    return jsonify({'status': 200})
+        if action == 'render_gif':
+            matrix.render_gif(image, 10)
+
+        return jsonify({'status': 200})
+
+
+api.add_resource(ImageDisplay, '/')
 
 if __name__ == '__main__':
-    app.run(host= '0.0.0.0',debug=True)
+    app.run(host='0.0.0.0', port=80, debug=True)
