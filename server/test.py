@@ -1,4 +1,4 @@
-from RgbMatrixLocal import RgbMatrix
+from RgbMatrix import RgbMatrix
 import time
 import sys
 

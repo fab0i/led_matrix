@@ -115,7 +115,9 @@ class RgbMatrix():
 
     # @TODO: Transparent GIFs are broken
     def render_gif(self, img_file, duration):
+        print("Render gif:", img_file, duration)
         frames = [self.pixelate(f) for f in self.processImage(img_file)]
+        print(len(frames))
         start = time.time()
         while time.time() - start < duration if duration else True:
             for f in frames:
