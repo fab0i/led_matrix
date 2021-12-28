@@ -5,6 +5,9 @@ import sys
 
 from rgbmatrix import RGBMatrix, RGBMatrixOptions
 from PIL import Image
+from io import BytesIO
+import base64
+import re
 
 class RgbMatrix():
     def __init__(self, rows=32, cols=32):
@@ -14,17 +17,18 @@ class RgbMatrix():
         options.chain_length = 1
         options.parallel = 1
         options.hardware_mapping = 'adafruit-hat'
+        options.drop_privileges = False
 
         self.size = (rows, cols)
 
         self.matrix = RGBMatrix(options=options)
 
-    def render_img(self, img_file, duration):
+    def render_img(self, img_file, duration, pixelate=False):
         try:
-            image = self.pixelate(Image.open(img_file))
-            # image.thumbnail((self.matrix.width, self.matrix.height), Image.ANTIALIAS)
+            image = Image.open(img_file)
+            if pixelate:
+                image = self.pixelate(image)
             self.display_img(image, duration)
-
         except IOError:
             print("Unable to load image")
 
@@ -45,7 +49,7 @@ class RgbMatrix():
     def analyseImage(path):
         """
         Pre-process pass over the image to determine the mode (full or additive).
-        Necessary as assessing single frames isn't reliable. Need to know the mode 
+        Necessary as assessing single frames isn't reliable. Need to know the mode
         before processing all frames.
         """
 
@@ -74,7 +78,7 @@ class RgbMatrix():
         Iterate the GIF, extracting each frame.
         """
         mode = self.analyseImage(path)['mode']
-                        
+
         im = Image.open(path)
 
         frames = []
@@ -92,9 +96,9 @@ class RgbMatrix():
                 '''
                 if not im.getpalette():
                     im.putpalette(p)
-            
+
                 new_frame = Image.new('RGBA', im.size)
-            
+
                 '''
                 Is this file a "partial"-mode GIF where frames update a region of a different size to the entire image?
                 If so, we need to construct the new frame by pasting it on top of the preceding frames.
@@ -122,3 +126,9 @@ class RgbMatrix():
         while time.time() - start < duration if duration else True:
             for f in frames:
                 self.display_img(f, 0.1)
+
+    def render_base64(self, image, duration):
+        image = re.sub(r'^data:image\/[a-z]+;base64,', '', image)
+        image = Image.open(BytesIO(base64.b64decode(image)))
+        self.display_img(image, duration)
+        return True
