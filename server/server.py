@@ -17,6 +17,7 @@ def code_setup():
     print("CODE SETUP!!")
     pass
 
+
 class FlaskPiServer(Resource):
 
     def __call__(self, app, *args, **kwargs):
@@ -33,18 +34,18 @@ class FlaskPiServer(Resource):
             action = json_data['action']
 
             if action == 'render_gif':
-                self.render_gif(json_data)
+                render_gif(json_data)
             elif action == 'render_base64':
                 job_id = "DisplayImage"
                 print("THIS JOB:", job_id)
 
                 self.clear_current_process()
 
-                funcz = lambda: self.render_base64(json_data, job_id)
-                job = app.apscheduler.add_job(replace_existing=True, func=self.execute_process, trigger='date',
-                        args=[funcz], id=job_id, max_instances=1)
-
-                print(job.id)
+                funcz = lambda: render_base64(json_data, job_id)
+                #job = app.apscheduler.add_job(replace_existing=True, func=self.execute_process, trigger='date',
+                #                              args=[funcz], id=job_id, max_instances=1)
+                self.execute_process(funcz)
+                #print(job.id)
 
         except Exception as e:
             response['status'] = 500
@@ -72,13 +73,9 @@ class FlaskPiServer(Resource):
                 print("[CHILD] Sepukku time")
                 exit()
 
+
     def clear_current_process(self, db_only=False):
         print("pid={}. Clear_current_process()".format(os.getpid()))
-        #try:
-        #    file_info = os.stat(self.pid_file)
-        #    print("pid={}. File Stats={}".format(os.getpid(), file_info))
-        #except Exception as e:
-        #    print("Error clear:", str(e))
         pid = self.clear_current_process_db()
         if pid is not None:
         #if os.path.exists(self.pid_file):
@@ -121,24 +118,33 @@ class FlaskPiServer(Resource):
         print("ADD - updated results:", results)
 
 
-    def render_gif(self, data):
-        print("Render GIF")
-        image = data['img']
-        duration = int(data['duration'])
-        matrix = RgbMatrix(32, 32)
-        matrix.render_gif(image, duration)
+def render_gif(data):
+    print("Render GIF")
+    image = data['img']
+    duration = int(data['duration'])
+    matrix = RgbMatrix(32, 32)
+    matrix.render_gif(image, duration)
 
-    def render_base64(self, data, job_id):
-        print("Render Base64")
-        image = data['img']
-        duration = int(data['duration'])
-        matrix = RgbMatrix(32, 32)
-        matrix.render_base64(image, duration)
+def render_base64(data, job_id):
+    print("Render Base64")
+    image = data['img']
+    duration = int(data['duration'])
+    matrix = RgbMatrix(32, 32)
+    matrix.render_base64(image, duration)
 
 
-    def queue_image(self, image, date):
-        pass
 
+
+def process_queue(db):
+    Q = Query()
+    alerts = db.search(Q.job == 'alert' && Q.soon <= 1)
+
+    for key, alert in alerts.items:
+        if alert["soon"] == 0:
+            pass
+
+    print(queue)
+    db.remove(Q.job_type == "notifications")
 
 if __name__ == '__main__':
     app = Flask(__name__)
@@ -153,7 +159,8 @@ if __name__ == '__main__':
     scheduler = BackgroundScheduler()
     #scheduler.init_app(app)
     scheduler.app = app
-    scheduler.app.apscheduler = scheduler
+    app.apscheduler = scheduler
+    scheduler.add_job(lambda: process_queue(db), trigger="interval", seconds=5)
     scheduler.start()
 
     app.run(host='0.0.0.0', port=5000, debug=False)
