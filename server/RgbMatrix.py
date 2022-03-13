@@ -34,7 +34,7 @@ class RgbMatrix():
 
     def pixelate(self, pilImage):
         """
-        :param img: img file path
+        :param pilImg: img file path
         :return: Pixelated image, resized to fit the canvas
         """
         # Resize Pillow image to have dimension of LED Matrix

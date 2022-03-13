@@ -4,7 +4,9 @@ import sys
 
 from PIL import Image, ImageTk, ExifTags
 from tkinter import Tk, Canvas
-from tkinter.ttk import Label
+from io import BytesIO
+import base64
+import re
 
 
 class RgbMatrix():
@@ -125,3 +127,9 @@ class RgbMatrix():
         while time.time() - start < duration if duration else True:
             for f in frames:
                 self.display_img(f, 0.1)
+
+    def render_base64(self, image, duration):
+        image = re.sub(r'^data:image\/[a-z]+;base64,', '', image)
+        image = Image.open(BytesIO(base64.b64decode(image)))
+        self.display_img(image, duration)
+        return True
