@@ -9,6 +9,10 @@ import json
 import _thread as thread
 import os, signal
 from tinydb import TinyDB, Query
+import base64
+import re
+
+IMG_DIR = '/pixeled_images'
 
 class FlaskPiServer(Resource):
     def get(self):
@@ -17,12 +21,12 @@ class FlaskPiServer(Resource):
     def post(self):
         response = {'status': 200}
         try:
-            #print( 'data', request.data)
-            #print('form', request.form)
-            #print('json', request.json)
-            #print('values', request.values)
-            #print('files', request.files)
-            json_data = request.form
+            print( 'data', request.data)
+            print('form', request.form)
+            print('json', request.json)
+            print('values', request.values)
+            print('files', request.files)
+            json_data = request.form if request.form else json.loads(request.json)
             action = json_data['action']
 
             print(action)
@@ -36,7 +40,11 @@ class FlaskPiServer(Resource):
                 self.clear_current_process()
                 self.execute_process(lambda: self.render_base64(json_data, job_id))
             elif action == 'save_image':
-                print(json_data)
+                print("\n\nSave Image...")
+                img_data = json_data['data']
+                self.save_image(img_data['file'], img_data['image'],
+                        img_data['id'], img_data['user_id'])
+
 
         except Exception as e:
             response['status'] = 500
@@ -121,6 +129,20 @@ class FlaskPiServer(Resource):
         app.db.clear_cache()
         app.db.update({'pid': pid}, Query().job_type == 'current')
 
+    def save_image(self, file_location, img_str_data, img_id, user_id):
+        print("Saving image to database table")
+        app.images.insert({'id': img_id, 'file_location': file_location, 'user_id': user_id})
+        print("Saved to db.")
+        print("Converting to binary")
+        img_data = base64.b64decode(re.sub(r'data:image\/[a-z]+;base64,', '', img_str_data))
+        print("Creating dirs")
+        file_location = IMG_DIR + file_location
+        os.makedirs(os.path.dirname(file_location), exist_ok=True)
+        print("Saving image file...")
+        with open(file_location, 'wb') as f:
+            f.write(img_data)
+        print("Save complete")
+
     @staticmethod
     def render_gif(data):
         print("Render GIF")
@@ -138,14 +160,18 @@ class FlaskPiServer(Resource):
         matrix.render_base64(image, duration)
 
 
+
+
 if __name__ == '__main__':
     app = Flask(__name__)
     api = Api(app)
     api.add_resource(FlaskPiServer, '/')
 
-    db = TinyDB('task_db.json')
+    # TODO: IF NEEDED< CREATE DIFFERENT FILES FOR DIFFERENT PURPOSES/TABLES
+    db = TinyDB('main_db.json')
     app.db = db
     app.jobs = db.table('jobs')
+    app.images = db.table('images')
 
     job_controller = JobController(db, app)
 
