@@ -1,1 +1,1 @@
-{"_default": {"0": {"job_type": "current", "pid": null}}, "jobs": {}}
+{"_default": {"0": {"job_type": "current", "pid": null}}, "jobs": {}, "images": {"1": {"user_id": "1", "id": 33, "file_location": "/all/pill.png"}, "2": {"user_id": "1", "id": 34, "file_location": "/gifs/shrek.gif"}, "3": {"user_id": "1", "id": 35, "file_location": "/all/dog.png"}, "4": {"user_id": "1", "id": 36, "file_location": "/all/running.png"}}}
