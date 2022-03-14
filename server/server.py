@@ -60,9 +60,9 @@ class FlaskPiServer(Resource):
 
         if pid > 0:
             print("PARENT: I'm Parent =", os.getpid())
-            self.update_current_process_db(pid)
         else:
             print("CHILD: I'm the Child =", os.getpid())
+            self.update_current_process_db(pid)
             try:
                 task(**kwargs)
             finally:
@@ -72,14 +72,15 @@ class FlaskPiServer(Resource):
                 print("CHILD: ")
                 exit(1)
 
-    def clear_current_process(self, db_only=False):
+    def clear_current_process(self, db_only=False, nocache=False):
         """
         Deletes the current process in the database and kills the associated process.
         :param db_only: True to not kill the process.
+        :param nocache: Don't use cache in when clearing the process from the DB
         :return:
         """
         print("pid={}. Clear_current_process()".format(os.getpid()))
-        pid = self.clear_current_process_db()
+        pid = self.clear_current_process_db(nocache=nocache)
 
         if not db_only and pid is not None:
             try:
