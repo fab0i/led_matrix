@@ -17,8 +17,15 @@ class FlaskPiServer(Resource):
     def post(self):
         response = {'status': 200}
         try:
+            print( 'data', request.data)
+            print('form', request.form)
+            print('json', request.json)
+            print('values', request.values)
+            print('files', request.files)
             json_data = request.form
             action = json_data['action']
+
+            print(action)
 
             if action == 'render_gif':
                 self.render_gif(json_data)
@@ -48,8 +55,8 @@ class FlaskPiServer(Resource):
         for k, v in kwargs.items():
             print("k:{}, v:{}".format(k, v))
 
-        pid = 1    # TODO: TESTING
-        # os.fork() # TODO: PI
+        # pid = 1   # TESTING
+        pid = os.fork()   # PI
 
         if pid > 0:
             print("PARENT: I'm Parent =", os.getpid())
@@ -87,15 +94,17 @@ class FlaskPiServer(Resource):
         :param nocache: no cache.
         :return: pid of current process, if one exists.
         """
+
+        print("Clearing current process db")
         if nocache:
-            self.db.clear_cache()
+            app.db.clear_cache()
 
         Q = Query()
-        results = self.db.search(Q.job_type == 'current')
+        results = app.db.search(Q.job_type == 'current')
         if not results:
-            self.db.insert({'pid': None, 'job_type': 'current'})
+            app.db.insert({'pid': None, 'job_type': 'current'})
             return None
-        self.db.update({'pid': None}, Q.job_type == 'current')
+        app.db.update({'pid': None}, Q.job_type == 'current')
 
         print("Removed current process from DB (pid={})".format(os.getpid()))
         return results[0]['pid']
@@ -105,8 +114,8 @@ class FlaskPiServer(Resource):
         Updates the DB's current process with pid.
         :param pid: New current process pid.
         """
-        self.db.clear_cache()
-        self.db.update({'pid': pid}, Query().job_type == 'current')
+        app.db.clear_cache()
+        app.db.update({'pid': pid}, Query().job_type == 'current')
 
     @staticmethod
     def render_gif(data):

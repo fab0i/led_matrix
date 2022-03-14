@@ -15,7 +15,7 @@ class JobController:
         Q = Query()
         jobs = self.db.search(Q.job == 'alert' and Q.soon <= 1)
 
-        if not jobs:
+        if False and not jobs:
             not1 = NotificationAlert(
                 name="test1",
                 stop={"condition": "date", "date": time.time() + 120},
