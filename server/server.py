@@ -17,11 +17,11 @@ class FlaskPiServer(Resource):
     def post(self):
         response = {'status': 200}
         try:
-            print( 'data', request.data)
-            print('form', request.form)
-            print('json', request.json)
-            print('values', request.values)
-            print('files', request.files)
+            #print( 'data', request.data)
+            #print('form', request.form)
+            #print('json', request.json)
+            #print('values', request.values)
+            #print('files', request.files)
             json_data = request.form
             action = json_data['action']
 
@@ -59,18 +59,21 @@ class FlaskPiServer(Resource):
         pid = os.fork()   # PI
 
         if pid > 0:
-            print("PARENT: I'm Parent =", os.getpid())
+            print("PARENT: I'm Parent =", os.getpid(), ". child =", pid)
+            # Adding child process as current process
+            self.update_current_process_db(pid)
         else:
             print("CHILD: I'm the Child =", os.getpid())
-            self.update_current_process_db(pid)
+            # self.update_current_process_db(os.getpid())
             try:
                 task(**kwargs)
             finally:
                 print("[CHILD] Execution complete.")
                 self.clear_current_process(db_only=True)
                 print("CHILD: I removed myself from the database.")
-                print("CHILD: ")
-                exit(1)
+                print("CHILD: Removing myself from existence...")
+                #sys.exit(0)
+                os._exit(os.EX_OK)
 
     def clear_current_process(self, db_only=False, nocache=False):
         """
@@ -85,7 +88,7 @@ class FlaskPiServer(Resource):
         if not db_only and pid is not None:
             try:
                 print("KILLING PROCESS - PID =", pid)
-                os.kill(pid, signal.SIGBREAK)  # signal.SIGTERM   signal.SIGKILL
+                os.kill(pid, signal.SIGTERM)  # signal.SIGTERM   signal.SIGKILL
             finally:
                 print("KILLED PROCESS - PID =", pid)
 
