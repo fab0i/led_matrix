@@ -4,6 +4,10 @@ import time
 from apscheduler.schedulers.background import BackgroundScheduler
 from Calendar import CalendarController
 import json
+import os
+import signal
+import base64
+import re
 
 find_jobs_freq = 30
 process_jobs_freq = 15
@@ -116,8 +120,8 @@ class JobController:
                 file_location = job['display_info']
                 duration = job['stop']['time']
                 task = lambda: self.app.render_image_file(file_location, duration)
-        self.app.clear_current_process()
-        self.app.execute_process(task)
+        self.clear_current_process()
+        self.execute_process(task)
 
     @staticmethod
     def _get_job_to_execute(jobs):
@@ -147,3 +151,118 @@ class JobController:
                     min_job = job
 
         return min_job
+
+    def clear_current_process_db(self, nocache=True):
+        """
+        Deletes the current process in the database, if one exists.
+        :param nocache: no cache.
+        :return: pid of current process, if one exists.
+        """
+
+        print("Clearing current process db")
+        if nocache:
+            self.db.clear_cache()
+
+        Q = Query()
+        results = self.db.search(Q.job_type == 'current')
+        if not results:
+            self.db.insert({'pid': None, 'job_type': 'current'})
+            return None
+        self.db.update({'pid': None}, Q.job_type == 'current')
+
+        print("Removed current process from DB (pid={})".format(os.getpid()))
+        return results[0]['pid']
+
+
+    def clear_current_process(self, db_only=False, nocache=False):
+        """
+        Deletes the current process in the database and kills the associated process.
+        :param db_only: True to not kill the process.
+        :param nocache: Don't use cache in when clearing the process from the DB
+        :return:
+        """
+        print("pid={}. Clear_current_process()".format(os.getpid()))
+        pid = self.clear_current_process_db(nocache=nocache)
+
+        if not db_only and pid is not None:
+            try:
+                print("KILLING PROCESS - PID =", pid)
+                os.kill(pid, signal.SIGTERM)  # signal.SIGTERM   signal.SIGKILL
+            finally:
+                print("KILLED PROCESS - PID =", pid)
+
+    def execute_process(self, task, **kwargs):
+        """
+        Execute the given task in a chil process and then
+        :param task:
+        :param kwargs:
+        :return:
+        """
+        print("Executing", task)
+        for k, v in kwargs.items():
+            print("k:{}, v:{}".format(k, v))
+
+        # pid = 1   # TESTING
+        pid = os.fork()   # PI
+
+        if pid > 0:
+            print("PARENT: I'm Parent =", os.getpid(), ". child =", pid)
+            # Adding child process as current process
+            self.update_current_process_db(pid)
+        else:
+            print("CHILD: I'm the Child =", os.getpid())
+            # self.update_current_process_db(os.getpid())
+            try:
+                task(**kwargs)
+            finally:
+                print("[CHILD] Execution complete.")
+                self.clear_current_process(db_only=True)
+                print("CHILD: I removed myself from the database.")
+                print("CHILD: Removing myself from existence...")
+                #sys.exit(0)
+                os._exit(os.EX_OK)
+
+
+    def update_current_process_db(self, pid):
+        """
+        Updates the DB's current process with pid.
+        :param pid: New current process pid.
+        """
+        self.db.clear_cache()
+        self.db.update({'pid': pid}, Query().job_type == 'current')
+
+    def clear_current_process_db(self, nocache=True):
+        """
+        Deletes the current process in the database, if one exists.
+        :param nocache: no cache.
+        :return: pid of current process, if one exists.
+        """
+
+        print("Clearing current process db")
+        if nocache:
+            self.db.clear_cache()
+
+        Q = Query()
+        results = self.db.search(Q.job_type == 'current')
+        if not results:
+            self.db.insert({'pid': None, 'job_type': 'current'})
+            return None
+        self.db.update({'pid': None}, Q.job_type == 'current')
+
+        print("Removed current process from DB (pid={})".format(os.getpid()))
+        return results[0]['pid']
+
+
+    def save_image(self, dir, file_location, img_str_data, img_id, user_id):
+        print("Saving image to database table")
+        self.app.images.insert({'id': img_id, 'file_location': file_location, 'user_id': user_id})
+        print("Saved to db.")
+        print("Converting to binary")
+        img_data = base64.b64decode(re.sub(r'data:image\/[a-z]+;base64,', '', img_str_data))
+        print("Creating dirs")
+        file_location = dir + file_location
+        os.makedirs(os.path.dirname(file_location), exist_ok=True)
+        print("Saving image file...")
+        with open(file_location, 'wb') as f:
+            f.write(img_data)
+        print("Save complete")

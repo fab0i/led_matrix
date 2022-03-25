@@ -21,7 +21,7 @@ class FlaskPiServer(Resource):
     def post(self):
         response = {'status': 200}
         try:
-            print( 'data', request.data)
+            print('data', request.data)
             print('form', request.form)
             print('json', request.json)
             print('values', request.values)
@@ -37,111 +37,18 @@ class FlaskPiServer(Resource):
                 job_id = "DisplayImage"
                 print("THIS JOB:", job_id)
 
-                self.clear_current_process()
-                self.execute_process(lambda: self.render_base64(json_data, job_id))
+                self.jobs.clear_current_process()
+                self.jobs.execute_process(lambda: self.render_base64(json_data, job_id))
             elif action == 'save_image':
                 print("\n\nSave Image...")
                 img_data = json_data['data']
-                self.save_image(img_data['file'], img_data['image'],
-                        img_data['id'], img_data['user_id'])
-
+                self.jobs.save_image(img_data['file'], img_data['image'], img_data['id'], img_data['user_id'])
 
         except Exception as e:
             response['status'] = 500
             response['error'] = str(e)
             print("ERROR:", str(e))
         return jsonify(response)
-
-    def execute_process(self, task, **kwargs):
-        """
-        Execute the given task in a chil process and then
-        :param task:
-        :param kwargs:
-        :return:
-        """
-        print("Executing", task)
-        for k, v in kwargs.items():
-            print("k:{}, v:{}".format(k, v))
-
-        # pid = 1   # TESTING
-        pid = os.fork()   # PI
-
-        if pid > 0:
-            print("PARENT: I'm Parent =", os.getpid(), ". child =", pid)
-            # Adding child process as current process
-            self.update_current_process_db(pid)
-        else:
-            print("CHILD: I'm the Child =", os.getpid())
-            # self.update_current_process_db(os.getpid())
-            try:
-                task(**kwargs)
-            finally:
-                print("[CHILD] Execution complete.")
-                self.clear_current_process(db_only=True)
-                print("CHILD: I removed myself from the database.")
-                print("CHILD: Removing myself from existence...")
-                #sys.exit(0)
-                os._exit(os.EX_OK)
-
-    def clear_current_process(self, db_only=False, nocache=False):
-        """
-        Deletes the current process in the database and kills the associated process.
-        :param db_only: True to not kill the process.
-        :param nocache: Don't use cache in when clearing the process from the DB
-        :return:
-        """
-        print("pid={}. Clear_current_process()".format(os.getpid()))
-        pid = self.clear_current_process_db(nocache=nocache)
-
-        if not db_only and pid is not None:
-            try:
-                print("KILLING PROCESS - PID =", pid)
-                os.kill(pid, signal.SIGTERM)  # signal.SIGTERM   signal.SIGKILL
-            finally:
-                print("KILLED PROCESS - PID =", pid)
-
-    def clear_current_process_db(self, nocache=True):
-        """
-        Deletes the current process in the database, if one exists.
-        :param nocache: no cache.
-        :return: pid of current process, if one exists.
-        """
-
-        print("Clearing current process db")
-        if nocache:
-            app.db.clear_cache()
-
-        Q = Query()
-        results = app.db.search(Q.job_type == 'current')
-        if not results:
-            app.db.insert({'pid': None, 'job_type': 'current'})
-            return None
-        app.db.update({'pid': None}, Q.job_type == 'current')
-
-        print("Removed current process from DB (pid={})".format(os.getpid()))
-        return results[0]['pid']
-
-    def update_current_process_db(self, pid):
-        """
-        Updates the DB's current process with pid.
-        :param pid: New current process pid.
-        """
-        app.db.clear_cache()
-        app.db.update({'pid': pid}, Query().job_type == 'current')
-
-    def save_image(self, file_location, img_str_data, img_id, user_id):
-        print("Saving image to database table")
-        app.images.insert({'id': img_id, 'file_location': file_location, 'user_id': user_id})
-        print("Saved to db.")
-        print("Converting to binary")
-        img_data = base64.b64decode(re.sub(r'data:image\/[a-z]+;base64,', '', img_str_data))
-        print("Creating dirs")
-        file_location = IMG_DIR + file_location
-        os.makedirs(os.path.dirname(file_location), exist_ok=True)
-        print("Saving image file...")
-        with open(file_location, 'wb') as f:
-            f.write(img_data)
-        print("Save complete")
 
     @staticmethod
     def render_gif(data):
@@ -164,8 +71,6 @@ class FlaskPiServer(Resource):
         print("Render Image File")
         matrix = RgbMatrix(32, 32)
         matrix.render_img(img_file=file_location, duration=duration)
-
-
 
 
 if __name__ == '__main__':
