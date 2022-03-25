@@ -1,5 +1,5 @@
 from __future__ import print_function
-import datetime
+from datetime import datetime
 import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
@@ -8,7 +8,7 @@ from google.oauth2.credentials import Credentials
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar.events']
-credentials_file = 'client_secret_1072543823663-dm1fascten59a8hi1shkghill36s8bhp.apps.googleusercontent.com.json'
+credentials_file = 'credentials.json'
 
 
 def main():
@@ -36,7 +36,7 @@ def main():
     service = build('calendar', 'v3', credentials=creds)
 
     # Call the Calendar API
-    now = datetime.datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
+    now = datetime.utcnow().isoformat() + 'Z' # 'Z' indicates UTC time
     print('Getting the upcoming 10 events')
     calendarId = 'v5bb5nfjci1u9l2ajddht2cta4@group.calendar.google.com'
     # calendarId = 'primary'
@@ -49,8 +49,22 @@ def main():
         print('No upcoming events found.')
     for event in events:
         start = event['start'].get('dateTime', event['start'].get('date'))
+        end = event['end'].get('dateTime', event['end'].get('date'))
+        utc_start = datetime.strptime(get_utc_time(start), "%Y-%m-%dT%H:%M:%S")
+        now = datetime.now()
+        start_in = (now - utc_start).total_seconds()
+
         print(start, event['summary'])
+
+
+def get_utc_time(time_str):
+    # TODO: This
+    # Given a time_str in the format "2022-03-14T06:45:00-04:00", where -04:00 represents the timezone difference
+    return time_str[:-6]
 
 
 if __name__ == '__main__':
     main()
+    oi = "2022-03-14T06:45:00-04:00"
+    a = get_utc_time(oi)
+    print(a)

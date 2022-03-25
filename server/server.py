@@ -159,6 +159,12 @@ class FlaskPiServer(Resource):
         matrix = RgbMatrix(32, 32)
         matrix.render_base64(image, duration)
 
+    @staticmethod
+    def render_image_file(file_location, duration):
+        print("Render Image File")
+        matrix = RgbMatrix(32, 32)
+        matrix.render_img(img_file=file_location, duration=duration)
+
 
 
 
