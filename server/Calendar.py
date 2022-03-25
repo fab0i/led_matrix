@@ -1,7 +1,6 @@
 from datetime import datetime
 import os.path
 from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 
@@ -24,6 +23,7 @@ class CalendarController:
             if creds and creds.expired and creds.refresh_token:
                 creds.refresh(Request())
             else:
+                from google_auth_oauthlib.flow import InstalledAppFlow
                 flow = InstalledAppFlow.from_client_secrets_file(
                     credentials_file, SCOPES)
                 creds = flow.run_local_server(port=0)
