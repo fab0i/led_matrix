@@ -42,7 +42,7 @@ class FlaskPiServer(Resource):
             elif action == 'save_image':
                 print("\n\nSave Image...")
                 img_data = json_data['data']
-                self.jobs.save_image(img_data['file'], img_data['image'], img_data['id'], img_data['user_id'])
+                self.jobs.save_image(IMG_DIR, img_data['file'], img_data['image'], img_data['id'], img_data['user_id'])
 
         except Exception as e:
             response['status'] = 500
@@ -65,12 +65,6 @@ class FlaskPiServer(Resource):
         duration = int(data['duration'])
         matrix = RgbMatrix(32, 32)
         matrix.render_base64(image, duration)
-
-    @staticmethod
-    def render_image_file(file_location, duration):
-        print("Render Image File")
-        matrix = RgbMatrix(32, 32)
-        matrix.render_img(img_file=file_location, duration=duration)
 
 
 if __name__ == '__main__':

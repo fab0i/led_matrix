@@ -132,3 +132,9 @@ class RgbMatrix():
         image = Image.open(BytesIO(base64.b64decode(image)))
         self.display_img(image, duration)
         return True
+
+    def render_image_by_type(self, img_type, img_file, duration):
+        if img_type == 'gif':
+            self.render_gif(img_file, duration)
+        else:
+            self.render_img(img_file, duration)

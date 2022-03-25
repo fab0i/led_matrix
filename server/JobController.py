@@ -1,8 +1,9 @@
 from tinydb import TinyDB, Query
 from Alerts import NotificationAlert, CalendarAlert
-import time
+from RgbMatrix import RgbMatrix
 from apscheduler.schedulers.background import BackgroundScheduler
 from Calendar import CalendarController
+import time
 import json
 import os
 import signal
@@ -101,12 +102,11 @@ class JobController:
     def execute_job(self, job):
         # sleep
         task = None
-        if job['type'] == 'calendar':
-            if job['display'] == 'image_file':
-                file_location = job['display_info']
-                duration = job['stop']['time']
-                task = lambda: self.app.render_image_file(file_location, duration)
-        if task:
+        if job['display'] == 'image_file':
+            file_location = job['display_info']['file_location']
+            image_type = job['display_info']['image_type']
+            duration = job['stop']['time']
+            task = lambda: self.render_image_by_type(image_type, file_location, duration)
             self.clear_current_process()
             self.execute_process(task)
 
@@ -239,17 +239,22 @@ class JobController:
         print("Removed current process from DB (pid={})".format(os.getpid()))
         return results[0]['pid']
 
-
-    def save_image(self, dir, file_location, img_str_data, img_id, user_id):
+    def save_image(self, base_dir, file_location, img_str_data, img_id, user_id):
         print("Saving image to database table")
         self.app.images.insert({'id': img_id, 'file_location': file_location, 'user_id': user_id})
         print("Saved to db.")
         print("Converting to binary")
         img_data = base64.b64decode(re.sub(r'data:image\/[a-z]+;base64,', '', img_str_data))
         print("Creating dirs")
-        file_location = dir + file_location
+        file_location = base_dir + file_location
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
         print("Saving image file...")
         with open(file_location, 'wb') as f:
             f.write(img_data)
         print("Save complete")
+
+    @staticmethod
+    def render_image_by_type(img_type, img_file, duration):
+        print("Render Image File")
+        matrix = RgbMatrix(32, 32)
+        matrix.render_image_by_type(img_type, img_file, duration)
