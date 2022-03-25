@@ -3,6 +3,8 @@ import os.path
 from googleapiclient.discovery import build
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+import requests
+import urllib.parse
 
 SCOPES = ['https://www.googleapis.com/auth/calendar.events']
 credentials_file = 'user_info/calendar/credentials.json'
@@ -69,6 +71,16 @@ class CalendarController:
         return {'id': event['id'], 'summary': event['summary'],
                 'start': start, 'end': end,
                 'start_in': start_in, 'end_after': end_after}
+
+    @staticmethod
+    def get_event_display(event_text):
+        parsed_text = urllib.parse.quote(event_text)
+        url = "http://localhost:8000/apps/api/pixeled/event_display_from_text/?user_id=1&text={}".format(parsed_text)
+        r = requests.get(url)
+        result = r.json()
+        if 'success' in result and result['success']:
+            return result['display']
+        return {'display': 'text', 'text': "ERROR!"}
 
     @staticmethod
     def get_utc_time(time_str):
