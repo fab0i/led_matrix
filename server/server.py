@@ -12,8 +12,6 @@ from tinydb import TinyDB, Query
 import base64
 import re
 
-IMG_DIR = '/pixeled_images'
-
 class FlaskPiServer(Resource):
     def get(self):
         return "What?"
@@ -37,12 +35,12 @@ class FlaskPiServer(Resource):
                 job_id = "DisplayImage"
                 print("THIS JOB:", job_id)
 
-                sapp.jobs.clear_current_process()
+                self.app.jobs.clear_current_process()
                 self.app.jobs.execute_process(lambda: self.render_base64(json_data, job_id))
             elif action == 'save_image':
                 print("\n\nSave Image...")
                 img_data = json_data['data']
-                self.app.jobs.save_image(IMG_DIR, img_data['file'], img_data['image'], img_data['id'], img_data['user_id'])
+                self.app.jobs.save_image(img_data['file'], img_data['image'], img_data['id'], img_data['user_id'])
             elif action == 'save_keywords_dict':
                 print("\n\nSave Keywords...")
                 job_controller.save_keywords(json_data['keywords_dict'])

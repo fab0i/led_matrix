@@ -12,7 +12,9 @@ import re
 
 find_jobs_freq = 30
 process_jobs_freq = 15
-image_keywords_file = './user_info/image_keywords.json'
+
+IMAGE_KEYWORDS_FILE = './user_info/image_keywords.json'
+IMG_DIR = '/pixeled_images'
 
 class JobController:
     def __init__(self, db, app):
@@ -23,7 +25,7 @@ class JobController:
         self.scheduler.add_job(lambda: self.process_jobs(), trigger="interval", seconds=process_jobs_freq)
         self.scheduler.add_job(lambda: self.find_jobs(), trigger="interval", seconds=find_jobs_freq)
         self.scheduler.start()
-        with open(image_keywords_file, ) as kf:
+        with open(IMAGE_KEYWORDS_FILE, ) as kf:
             self.keywords = json.load(kf)
         self.process_jobs()
 
@@ -239,14 +241,14 @@ class JobController:
         print("Removed current process from DB (pid={})".format(os.getpid()))
         return results[0]['pid']
 
-    def save_image(self, base_dir, file_location, img_str_data, img_id, user_id):
+    def save_image(self, file_location, img_str_data, img_id, user_id):
         print("Saving image to database table")
         self.app.images.insert({'id': img_id, 'file_location': file_location, 'user_id': user_id})
         print("Saved to db.")
         print("Converting to binary")
         img_data = base64.b64decode(re.sub(r'data:image\/[a-z]+;base64,', '', img_str_data))
         print("Creating dirs")
-        file_location = base_dir + file_location
+        file_location = IMG_DIR + file_location
         os.makedirs(os.path.dirname(file_location), exist_ok=True)
         print("Saving image file...")
         with open(file_location, 'wb') as f:
@@ -255,11 +257,13 @@ class JobController:
 
     def save_keywords(self, keywords_json):
         self.keywords = json.loads(keywords_json)
-        with open(image_keywords_file, 'w') as k:
+        with open(IMAGE_KEYWORDS_FILE, 'w') as k:
             k.write(keywords_json)
 
     @staticmethod
     def render_image_by_type(img_type, img_file, duration):
         print("Render Image File")
+        img_file = IMG_DIR + img_file
+        print("File: " + img_file)
         matrix = RgbMatrix(32, 32)
         matrix.render_image_by_type(img_type, img_file, duration)
