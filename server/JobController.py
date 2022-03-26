@@ -65,6 +65,10 @@ class JobController:
         Q = Query()
         jobs = self.db.search(Q.job == 'alert' and Q.soon <= 1)
 
+        print("\n\nALL JOBS:\n")
+        print(jobs)
+        print("\n\n\n")
+
         if False and not jobs:
             not1 = NotificationAlert(
                 name="test1",
@@ -75,16 +79,6 @@ class JobController:
                 display_info=None
             )
             self.db.insert(not1.to_dict())
-
-            not2 = NotificationAlert(
-                name="test2",
-                stop={"condition": "date", "date": time.time() + 120},
-                soon=1,
-                date_start=time.time() + 6,
-                display="image",
-                display_info=None
-            )
-            self.db.insert(not2.to_dict())
 
             print("Inserted test jobs")
             jobs = self.db.search(Q.job == 'alert' and Q.soon <= 2)
