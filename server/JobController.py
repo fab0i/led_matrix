@@ -41,7 +41,7 @@ class JobController:
             event_info = self.calendar.get_event_info(event)
             print(event_info)
             if event_info['start_in'] < find_jobs_freq:
-                display = self.calendar.get_event_display(event_info['summary'])
+                display = self.calendar.get_event_display(event_info['summary'], self.keywords)
                 calendar_job = CalendarAlert(
                     calendar_id=event_info['id'],
                     name=event_info['summary'],
@@ -252,6 +252,11 @@ class JobController:
         with open(file_location, 'wb') as f:
             f.write(img_data)
         print("Save complete")
+
+    def save_keywords(self, keywords_json):
+        self.keywords = json.loads(keywords_json)
+        with open(image_keywords_file, 'w') as k:
+            k.write(keywords_json)
 
     @staticmethod
     def render_image_by_type(img_type, img_file, duration):

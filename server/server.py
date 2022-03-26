@@ -37,19 +37,16 @@ class FlaskPiServer(Resource):
                 job_id = "DisplayImage"
                 print("THIS JOB:", job_id)
 
-                self.jobs.clear_current_process()
-                self.jobs.execute_process(lambda: self.render_base64(json_data, job_id))
+                sapp.jobs.clear_current_process()
+                self.app.jobs.execute_process(lambda: self.render_base64(json_data, job_id))
             elif action == 'save_image':
                 print("\n\nSave Image...")
                 img_data = json_data['data']
-                self.jobs.save_image(IMG_DIR, img_data['file'], img_data['image'], img_data['id'], img_data['user_id'])
+                self.app.jobs.save_image(IMG_DIR, img_data['file'], img_data['image'], img_data['id'], img_data['user_id'])
             elif action == 'save_keywords_dict':
                 print("\n\nSave Keywords...")
-                keywords = json.loads(json_data['keywords_dict'])
-                print(keywords)
+                job_controller.save_keywords(json_data['keywords_dict'])
 
-                #print(json_data)
-                #print('Is keywords_dict a key?', 'keywords_dict' in json_data)
 
         except Exception as e:
             response['status'] = 500
@@ -82,9 +79,10 @@ if __name__ == '__main__':
     # TODO: IF NEEDED< CREATE DIFFERENT FILES FOR DIFFERENT PURPOSES/TABLES
     db = TinyDB('main_db.json')
     app.db = db
-    app.jobs = db.table('jobs')
+    #app.jobs = db.table('jobs')
     app.images = db.table('images')
 
     job_controller = JobController(db, app)
+    app.jobs = job_controller
 
     app.run(host='0.0.0.0', port=5000, debug=False)

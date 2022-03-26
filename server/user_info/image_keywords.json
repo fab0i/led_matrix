@@ -1,3 +1,1 @@
-{
-  "coding": 33
-}
+{"dog":{"display":"image_file","display_info":{"file_location":"/all/dog.png","image_type":"png"},"image_type":"png"},"pill":{"display":"image_file","display_info":{"file_location":"/all/pill.png","image_type":"png"},"image_type":"png"},"shrek":{"display":"image_file","display_info":{"file_location":"/gifs/shrek.gif","image_type":"gif"},"image_type":"gif"}}

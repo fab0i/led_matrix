@@ -54,6 +54,7 @@ class CalendarController:
                             - start_in & end_after: start job in start_in seconds for end_after seconds
                             - summary: Event title/summary string
         """
+
         start = event['start'].get('dateTime', event['start'].get('date'))
         end = event['end'].get('dateTime', event['end'].get('date'))
 
@@ -73,13 +74,10 @@ class CalendarController:
                 'start_in': start_in, 'end_after': end_after}
 
     @staticmethod
-    def get_event_display(event_text):
-        parsed_text = urllib.parse.quote(event_text)
-        url = "http://localhost:8000/apps/api/pixeled/event_display_from_text/?user_id=1&text={}".format(parsed_text)
-        r = requests.get(url)
-        result = r.json()
-        if 'success' in result and result['success']:
-            return result['display']
+    def get_event_display(event_text, keywords):
+        for word in event_text.lower().split():
+            if word in keywords:
+                return keywords[word]
         return {'display': 'text', 'text': "ERROR!"}
 
     @staticmethod
