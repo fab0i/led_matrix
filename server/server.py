@@ -43,6 +43,13 @@ class FlaskPiServer(Resource):
                 print("\n\nSave Image...")
                 img_data = json_data['data']
                 self.jobs.save_image(IMG_DIR, img_data['file'], img_data['image'], img_data['id'], img_data['user_id'])
+            elif action == 'save_keywords_dict':
+                print("\n\nSave Keywords...")
+                keywords = json.loads(json_data['keywords_dict'])
+                print(keywords)
+
+                #print(json_data)
+                #print('Is keywords_dict a key?', 'keywords_dict' in json_data)
 
         except Exception as e:
             response['status'] = 500
