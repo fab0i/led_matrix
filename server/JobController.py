@@ -3,6 +3,7 @@ from Alerts import NotificationAlert, CalendarAlert
 from RgbMatrix import RgbMatrix
 from apscheduler.schedulers.background import BackgroundScheduler
 from Calendar import CalendarController
+from database.Databases import JobsDB, ImagesDB
 import time
 import json
 import os
@@ -10,31 +11,39 @@ import signal
 import base64
 import re
 
-find_jobs_freq = 30
+pre_process_jobs_freq = 30
 process_jobs_freq = 15
 
 IMAGE_KEYWORDS_FILE = './user_info/image_keywords.json'
 IMG_DIR = '/pixeled_images'
 
 class JobController:
-    def __init__(self, db, app):
-        self.db = db
+    def __init__(self, app):
         self.app = app
-        self.calendar = CalendarController()
-        self.scheduler = BackgroundScheduler()
-        self.scheduler.add_job(lambda: self.process_jobs(), trigger="interval", seconds=process_jobs_freq)
-        self.scheduler.add_job(lambda: self.find_jobs(), trigger="interval", seconds=find_jobs_freq)
-        self.scheduler.start()
+
+        # TODO: IF NEEDED< CREATE DIFFERENT FILES FOR DIFFERENT PURPOSES/TABLES
+        db = TinyDB('main_db.json')
+        self.db = JobsDB()
+        self.img_db = ImagesDB()
         with open(IMAGE_KEYWORDS_FILE, ) as kf:
             self.keywords = json.load(kf)
+
+        self.calendar = CalendarController()
+        self.scheduler = BackgroundScheduler()
+
+        self.scheduler.add_job(lambda: self.process_jobs(), trigger="interval", seconds=process_jobs_freq)
+        self.scheduler.add_job(lambda: self.pre_process_jobs(), trigger="interval", seconds=pre_process_jobs_freq)
+        self.scheduler.start()
+
         self.process_jobs()
 
-    def find_jobs(self):
+    def pre_process_jobs(self):
         """
         Every 1 min:
             - Checks for Calendar Events
             - Other stuff
-        :return:
+            - @TODO: Check if calendar id already exists
+            - @TODO: Remove calendar events that are past the date_end from the jobs db (self.db)
         """
         print("Looking for events")
         calendar_events = self.calendar.get_upcoming_events()
@@ -42,7 +51,7 @@ class JobController:
             print(event)
             event_info = self.calendar.get_event_info(event)
             print(event_info)
-            if event_info['start_in'] < find_jobs_freq:
+            if event_info['start_in'] < pre_process_jobs_freq:
                 display = self.calendar.get_event_display(event_info['summary'], self.keywords)
                 calendar_job = CalendarAlert(
                     calendar_id=event_info['id'],
@@ -91,8 +100,9 @@ class JobController:
         else:
             # If there are more than 1 jobs to be executed in the next 5s, run the helper function to figure out which
             job = self._get_job_to_execute(jobs)
-        print(job)
-        #self.db.update({'soon': 0}, Q.job_type == 'current')
+        print("\nExecuting job:")
+        print(job, '\n')
+
         self.execute_job(job)
 
     def execute_job(self, job):
@@ -109,6 +119,12 @@ class JobController:
     @staticmethod
     def _get_job_to_execute(jobs):
         """
+        soon = -2 -> Job marked as completed but we're before the end_date (E.g. Calendar event was canceled manually)
+        soon = -1 -> Job is currently running.
+        soon =  0 -> Job is queued to be executed next
+        soon =  1 -> Job is going o happen in the next [pre_process_jobs_freq] seconds
+
+
         Given multiple jobs that are currently on the "soon" queue, returns the appropriate job to be executed. Logic:
         - If any job has soon=-1, return None, since a job is already queued for execution.
         - All jobs that have soon=1 have priority over jobs with soon=0, since new jobs that should be displayed on time
@@ -149,12 +165,21 @@ class JobController:
         Q = Query()
         results = self.db.search(Q.job_type == 'current')
         if not results:
-            self.db.insert({'pid': None, 'job_type': 'current'})
+            self.db.insert({'pid': None, 'id': None, 'job_type': 'current'})
             return None
-        self.db.update({'pid': None}, Q.job_type == 'current')
+        self.db.update({'pid': None, 'id': None}, Q.job_type == 'current')
+        if results[0]['id']:
+            self.db.update()
 
         print("Removed current process from DB (pid={})".format(os.getpid()))
         return results[0]['pid']
+
+    def remove_job_from_queue(self, job):
+        """
+        Removes the given job from the queue/db. If the job has a date_end
+        :param job:
+        :return:
+        """
 
 
     def clear_current_process(self, db_only=False, nocache=False):
@@ -237,7 +262,7 @@ class JobController:
 
     def save_image(self, file_location, img_str_data, img_id, user_id):
         print("Saving image to database table")
-        self.app.images.insert({'id': img_id, 'file_location': file_location, 'user_id': user_id})
+        self.db.images.insert({'id': img_id, 'file_location': file_location, 'user_id': user_id})
         print("Saved to db.")
         print("Converting to binary")
         img_data = base64.b64decode(re.sub(r'data:image\/[a-z]+;base64,', '', img_str_data))

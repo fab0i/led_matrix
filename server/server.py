@@ -3,14 +3,8 @@ from flask_restful import Api, Resource
 from JobController import JobController
 
 from RgbMatrix import RgbMatrix
-import time
-import sys
 import json
-import _thread as thread
-import os, signal
-from tinydb import TinyDB, Query
-import base64
-import re
+from tinydb import TinyDB
 
 class FlaskPiServer(Resource):
     def get(self):
@@ -74,13 +68,7 @@ if __name__ == '__main__':
     api = Api(app)
     api.add_resource(FlaskPiServer, '/')
 
-    # TODO: IF NEEDED< CREATE DIFFERENT FILES FOR DIFFERENT PURPOSES/TABLES
-    db = TinyDB('main_db.json')
-    app.db = db
-    #app.jobs = db.table('jobs')
-    app.images = db.table('images')
-
-    job_controller = JobController(db, app)
+    job_controller = JobController(app)
     app.jobs = job_controller
 
     app.run(host='0.0.0.0', port=5000, debug=False)
